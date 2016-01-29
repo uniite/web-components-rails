@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{Web components utils for rails}
   spec.description   = spec.summary
 
-  spec.files         = ['lib/**/*']
+  spec.files         = Dir.glob("{lib}/**/*") + %w(README.md)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
