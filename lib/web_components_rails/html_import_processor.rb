@@ -46,6 +46,7 @@ class WebComponentsRails::HTMLImportProcessor
     def process_imports(html, base_dir)
       doc = Nokogiri::HTML5.fragment(html)
 
+      # Process HTML and CSS imports
       dependencies = doc.css('link').map do |link|
         href = link.attributes['href'].value
         path = href_to_asset_path(href, base_dir)
@@ -68,7 +69,7 @@ class WebComponentsRails::HTMLImportProcessor
           when 'html', 'text/html'
             link.remove
             href_to_asset_path(href, base_dir)
-          # Everything else needs to be inlined (eg. CSS, JS)
+          # CSS needs to be inlined
           when 'css', 'text/css'
             asset = ::Rails.application.assets.find_asset(path, accept: 'text/css')
             # Replace it inline with a style node containing the referenced CSS
@@ -81,6 +82,22 @@ class WebComponentsRails::HTMLImportProcessor
             nil
         end
       end.compact
+
+      # Script/JS imports should just have their src rewritten to work with sprockets
+      # (because they could repeat a lot, and we can't mark non-HTML files as dependencies)
+      doc.css('script[src]').map do |script|
+        puts "SCRIPT"
+        src = script.attributes['src'].value
+        if src.present?
+          # Some references may try to be relative to the bower_components root,
+          # which is already in the asset pipeline search path; fix those
+          # (eg. from 'web_components/lib-a/foo.html', <script src='../lib-b/bar.js'> -> 'lib-b/bar.js')
+          src = src.sub(/^..\//, '')
+          new_script = Nokogiri::XML::Element.new('script', doc)
+          new_script['src'] = @context.asset_path(src)
+          script.replace(new_script)
+        end
+      end
 
       # Nokogiri/Nokogumbo are hard-coded to URI-escape certain attributes (src, href, action, and a[name]),
       # so we have to put in placeholders, and fix the values in the HTML string output afterwards
