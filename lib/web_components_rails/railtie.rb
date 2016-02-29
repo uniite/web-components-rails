@@ -5,8 +5,11 @@ class WebComponentsRails::Railtie < Rails::Railtie
     ActionView::Base.module_eval do
       include WebComponentsRails::AssetTagHelper
     end
-    Rails.application.assets.context_class.class_eval do
-      include WebComponentsRails::AssetTagHelper
+    # Certain run modes in Rails (like rails g migration), won't have assets loaded
+    if Rails.application.assets.present?
+      Rails.application.assets.context_class.class_eval do
+        include WebComponentsRails::AssetTagHelper
+      end
     end
   end
 
