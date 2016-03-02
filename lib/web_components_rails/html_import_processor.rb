@@ -73,9 +73,12 @@ class WebComponentsRails::HTMLImportProcessor
           when 'css', 'text/css'
             asset = ::Rails.application.assets.find_asset(path, accept: 'text/css')
             # Replace it inline with a style node containing the referenced CSS
-            style = Nokogiri::XML::Element.new('style', doc)
-            style.inner_html = asset.source
-            link.replace(style)
+            if asset
+              style = Nokogiri::XML::Element.new('style', doc)
+              style['original-href'] = href
+              style.content = "\n" + asset.source
+              link.replace(style)
+            end
             nil
           # Ignore unknown types
           else
@@ -86,16 +89,20 @@ class WebComponentsRails::HTMLImportProcessor
       # Script/JS imports should just have their src rewritten to work with sprockets
       # (because they could repeat a lot, and we can't mark non-HTML files as dependencies)
       doc.css('script[src]').map do |script|
-        puts "SCRIPT"
         src = script.attributes['src'].value
         if src.present?
           # Some references may try to be relative to the bower_components root,
           # which is already in the asset pipeline search path; fix those
           # (eg. from 'web_components/lib-a/foo.html', <script src='../lib-b/bar.js'> -> 'lib-b/bar.js')
-          src = src.sub(/^..\//, '')
-          new_script = Nokogiri::XML::Element.new('script', doc)
-          new_script['src'] = @context.asset_path(src)
-          script.replace(new_script)
+          path = href_to_asset_path(src, base_dir)
+          asset = ::Rails.application.assets.find_asset(path, accept: 'application/javascript')
+          # Replace it with a script tag containing the referenced JS inline
+          if asset
+            new_script = Nokogiri::XML::Element.new('script', doc)
+            new_script['original-src'] = src
+            new_script.content = "\n" + asset.source
+            script.replace(new_script)
+          end
         end
       end
 
