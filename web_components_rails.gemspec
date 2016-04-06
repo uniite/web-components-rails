@@ -22,4 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'nokogumbo', '>= 1.4.5'
   spec.add_dependency 'railties', '>= 4.0.0'
   spec.add_dependency 'sprockets', '>= 3.0.0'
+  spec.add_dependency 'haml'
+
+  spec.add_development_dependency 'rspec', '>= 3.0', '< 4.0'
 end
