@@ -1,3 +1,4 @@
+require 'action_view'
 require 'sprockets/railtie'
 
 class WebComponentsRails::Railtie < Rails::Railtie

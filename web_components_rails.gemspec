@@ -20,8 +20,8 @@ Gem::Specification.new do |spec|
   # The normal Nokogiri/libxml HTML parser does not fully support Polymer HTML syntax
   # (such as <div class$="{{foo}}"></div>)
   spec.add_dependency 'nokogumbo', '>= 1.4.5'
-  spec.add_dependency 'railties', '>= 4.0.0'
-  spec.add_dependency 'sprockets', '>= 3.0.0'
+  spec.add_dependency 'rails', '>= 4.0.0'
+  spec.add_dependency 'sprockets-rails', '>= 3.0.0'
   spec.add_dependency 'haml'
 
   spec.add_development_dependency 'rspec', '>= 3.0', '< 4.0'
