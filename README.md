@@ -1,6 +1,8 @@
 # web_components_rails
 Ruby gem for using web components in Rails applications.
 
+[![Build Status](https://travis-ci.org/uniite/web-components-rails.svg)](https://travis-ci.org/uniite/web-components-rails) 
+
 ## Usage
 1. Include the gem in your Gemfile:
 ```ruby
