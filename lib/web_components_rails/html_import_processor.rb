@@ -80,6 +80,8 @@ class WebComponentsRails::HTMLImportProcessor
               style['original-href'] = href
               style.content = "\n" + asset.source
               link.replace(style)
+              # Let sprockets know we're dependent on this asset, so that the HTML gets re-compiled when the CSS changes
+              @context.depend_on_asset(path)
             end
             nil
           # Ignore unknown types

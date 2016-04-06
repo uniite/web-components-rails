@@ -1,7 +1,6 @@
 require_relative '../lib/web_components_rails'
 
 describe 'Integration with Rails' do
-  let(:js_path) { File.join(@tmp_asset_path, 'test.js') }
   let(:output_path) { File.join(@tmp_path, 'compiled.html') }
 
   before(:all) do
@@ -60,9 +59,11 @@ describe 'Integration with Rails' do
   context 'given HTML with referenced JavaScript' do
     let(:component_name) { 'component-with-js' }
     let(:js_path) { File.join(@tmp_asset_path, 'test.js') }
+    let(:original_js) { 'var x = 1;' }
+    let(:new_js) { 'var x = 2;' }
     before do
       open(js_path, 'w') do |f|
-        f.write('var x = 1;')
+        f.write(original_js)
       end
       compile_asset(component_name)
     end
@@ -71,23 +72,59 @@ describe 'Integration with Rails' do
       expect(File.read(output_path)).to eq(
         "<p>Component 1</p>\n\n" +
         "<script original-src=\"test.js\">\n" +
-        "var x = 1;\n" +
+        "#{original_js}\n" +
         "</script>\n" +
         "<div>My Component</div>\n"
       )
     end
 
     it 'will update the HTML when the script changes' do
-      expect(File.read(output_path)).to include('var x = 1;')
+      expect(File.read(output_path)).to include(original_js)
 
-      # Need to make sure the mtime is different from the original test.js
+      # Need to make sure the mtime is different from the original version
       # (Sprockets modification time checks only work with second resolution)
       sleep 1
       open(js_path, 'w') do |f|
-        f.write('var y = 2;')
+        f.write(new_js)
       end
       compile_asset(component_name)
-      expect(File.read(output_path)).to include('var y = 2;')
+      expect(File.read(output_path)).to include(new_js)
+    end
+  end
+
+  context 'given HTML with referenced CSS' do
+    let(:component_name) { 'component-with-css' }
+    let(:css_path) { File.join(@tmp_asset_path, 'test.css') }
+    let(:original_css) { 'p { color: gray; }' }
+    let(:new_css) { 'p { color: orange; }' }
+    before do
+      open(css_path, 'w') do |f|
+        f.write(original_css)
+      end
+      compile_asset(component_name)
+    end
+
+    it 'inlines the CSS where the link tag was' do
+      expect(File.read(output_path)).to eq(
+        "<dom-module id=\"my-component\">\n" +
+        "    <template>\n" +
+        "        <style original-href=\"test.css\">\n#{original_css}\n</style>\n" +
+        "    </template>\n" +
+        "</dom-module>\n"
+      )
+    end
+
+    it 'will update the HTML when the CSS changes' do
+      expect(File.read(output_path)).to include(original_css)
+
+      # Need to make sure the mtime is different from the original version
+      # (Sprockets modification time checks only work with second resolution)
+      sleep 1
+      open(css_path, 'w') do |f|
+        f.write(new_css)
+      end
+      compile_asset(component_name)
+      expect(File.read(output_path)).to include(new_css)
     end
   end
 end
