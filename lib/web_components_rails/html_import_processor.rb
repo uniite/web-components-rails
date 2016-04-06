@@ -27,7 +27,9 @@ class WebComponentsRails::HTMLImportProcessor
   end
 
   def call(input)
-    @context = input[:environment].context_class.new(input)
+    # Sprockets::Environment for looking up assets, etc.
+    @environment = input[:environment]
+    @context = @environment.context_class.new(input)
     @data = input[:data]
     @filename = input[:filename]
     @dirname = File.dirname(@filename)
@@ -71,7 +73,7 @@ class WebComponentsRails::HTMLImportProcessor
             href_to_asset_path(href, base_dir)
           # CSS needs to be inlined
           when 'css', 'text/css'
-            asset = ::Rails.application.assets.find_asset(path, accept: 'text/css')
+            asset = @environment.find_asset(path, accept: 'text/css')
             # Replace it inline with a style node containing the referenced CSS
             if asset
               style = Nokogiri::XML::Element.new('style', doc)
@@ -95,13 +97,15 @@ class WebComponentsRails::HTMLImportProcessor
           # which is already in the asset pipeline search path; fix those
           # (eg. from 'web_components/lib-a/foo.html', <script src='../lib-b/bar.js'> -> 'lib-b/bar.js')
           path = href_to_asset_path(src, base_dir)
-          asset = ::Rails.application.assets.find_asset(path, accept: 'application/javascript')
+          asset = @environment.find_asset(path, accept: 'application/javascript')
           # Replace it with a script tag containing the referenced JS inline
           if asset
             new_script = Nokogiri::XML::Element.new('script', doc)
             new_script['original-src'] = src
             new_script.content = "\n" + asset.source
             script.replace(new_script)
+            # Let sprockets know we're dependent on this asset, so that the HTML gets re-compiled when the script changes
+            @context.depend_on_asset(path)
           end
         end
       end

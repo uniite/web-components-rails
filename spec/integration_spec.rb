@@ -1,6 +1,7 @@
 require_relative '../lib/web_components_rails'
 
 describe 'Integration with Rails' do
+  let(:js_path) { File.join(@tmp_asset_path, 'test.js') }
   let(:output_path) { File.join(@tmp_path, 'compiled.html') }
 
   before(:all) do
@@ -16,8 +17,7 @@ describe 'Integration with Rails' do
     @rails_app.config.eager_load = false
     @rails_app.config.active_support.deprecation = :stderr
     @rails_app.config.assets.enabled = true
-    @rails_app.config.assets.cache_store = [ :file_store, "#{@tmp_path}/cache" ]
-    @rails_app.config.assets.compile = true
+    @rails_app.config.assets.cache_store = [ :file_store, @cache_path ]
     @rails_app.config.assets.paths = [ @asset_path, @tmp_asset_path ]
     @rails_app.paths['log'] = File.join(@log_path, 'test.log')
     @rails_app.initialize!
@@ -33,6 +33,7 @@ describe 'Integration with Rails' do
   end
 
   def compile_asset(name)
+    FileUtils.rm(output_path) if File.exist?(output_path)
     @rails_app.assets[name].write_to(output_path)
   end
 
@@ -60,9 +61,9 @@ describe 'Integration with Rails' do
     let(:component_name) { 'component-with-js' }
     let(:js_path) { File.join(@tmp_asset_path, 'test.js') }
     before do
-      f = open(js_path, 'w')
-      f.write('var x = 1;')
-      f.close
+      open(js_path, 'w') do |f|
+        f.write('var x = 1;')
+      end
       compile_asset(component_name)
     end
 
@@ -79,11 +80,14 @@ describe 'Integration with Rails' do
     it 'will update the HTML when the script changes' do
       expect(File.read(output_path)).to include('var x = 1;')
 
-      f = open(js_path, 'w')
-      f.write('var x = 2;')
-      f.close
+      # Need to make sure the mtime is different from the original test.js
+      # (Sprockets modification time checks only work with second resolution)
+      sleep 1
+      open(js_path, 'w') do |f|
+        f.write('var y = 2;')
+      end
       compile_asset(component_name)
-      expect(File.read(output_path)).to include('var x = 2;')
+      expect(File.read(output_path)).to include('var y = 2;')
     end
   end
 end
