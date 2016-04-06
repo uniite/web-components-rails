@@ -6,7 +6,7 @@ require 'securerandom'
 #   https://github.com/rails/sprockets/blob/3.x/lib/sprockets/directive_processor.rb
 class WebComponentsRails::HTMLImportProcessor
 
-  VERSION = '8'
+  VERSION = '9'
 
   def self.instance
     @instance ||= new
