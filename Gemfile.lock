@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    web_components_rails (1.1.1)
+    web_components_rails (1.1.3)
       haml
       nokogumbo (>= 1.4.5)
       railties (>= 4.0.0)
