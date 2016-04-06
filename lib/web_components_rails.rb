@@ -1,4 +1,5 @@
 require 'nokogumbo'
+require 'sprockets'
 
 module WebComponentsRails
 end

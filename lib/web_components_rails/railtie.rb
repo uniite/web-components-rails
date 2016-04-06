@@ -1,4 +1,5 @@
-require 'haml'
+require 'sprockets/railtie'
+
 class WebComponentsRails::Railtie < Rails::Railtie
   # Register our asset tag helpers
   initializer 'web_components.asset_tag_helper' do
@@ -15,11 +16,12 @@ class WebComponentsRails::Railtie < Rails::Railtie
 
   # Allows HAML templates to be used with asset pipeline
   initializer 'web_components.sprockets', after: 'sprockets.environment', group: :all do |app|
-    app.assets.register_mime_type 'text/html', extensions: ['.html', '.haml']
-    app.assets.register_preprocessor 'text/html', Sprockets::DirectiveProcessor
-    app.assets.register_preprocessor 'text/html', WebComponentsRails::HTMLImportProcessor
-    app.assets.register_engine '.haml', WebComponentsRails::HamlTemplate
-    app.assets.register_bundle_processor 'text/html', ::Sprockets::Bundle
+    app.config.assets.configure do |env|
+      env.register_mime_type 'text/html', extensions: ['.html', '.haml']
+      env.register_preprocessor 'text/html', Sprockets::DirectiveProcessor
+      env.register_preprocessor 'text/html', WebComponentsRails::HTMLImportProcessor
+      env.register_engine '.haml', WebComponentsRails::HamlTemplate
+      env.register_bundle_processor 'text/html', ::Sprockets::Bundle
+    end
   end
 end
-
