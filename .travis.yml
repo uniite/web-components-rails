@@ -1,4 +1,9 @@
 language: ruby
+env:
+ # 4.1 uses sprockets 2
+ - "RAILS_VERSION=4.1.0"
+ # 4.2 uses sprockets 3
+ - "RAILS_VERSION=4.2.0"
 rvm:
  - 2.1
  - 2.2
