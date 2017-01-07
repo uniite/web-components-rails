@@ -4,10 +4,20 @@ env:
  - "RAILS_VERSION=4.1.0"
  # 4.2 uses sprockets 3
  - "RAILS_VERSION=4.2.0"
+  # 5.0 uses sprockets 3 (until 4 is stable)
+ - "RAILS_VERSION=5.0.0"
 rvm:
  - 2.2.6
  - 2.3.3
  - 2.4.0
+matrix:
+  exclude:
+  - rvm: 2.4.0
+    env: RAILS_VERSION=4.1.0
+  - rvm: 2.4.0
+    env: RAILS_VERSION=4.2.0
+  - rvm: 2.2.6
+    env: RAILS_VERSION=5.1.0
 script: bundle exec rspec spec
 deploy:
   provider: rubygems
