@@ -17,7 +17,7 @@ matrix:
   - rvm: 2.4.0
     env: RAILS_VERSION=4.2.0
   - rvm: 2.2.6
-    env: RAILS_VERSION=5.1.0
+    env: RAILS_VERSION=5.0.0
 script: bundle exec rspec spec
 deploy:
   provider: rubygems
