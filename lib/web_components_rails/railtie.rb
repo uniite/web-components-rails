@@ -21,7 +21,6 @@ class WebComponentsRails::Railtie < Rails::Railtie
       env.register_mime_type 'text/html', extensions: ['.html', '.haml']
       env.register_preprocessor 'text/html', Sprockets::DirectiveProcessor
       env.register_preprocessor 'text/html', WebComponentsRails::HTMLImportProcessor
-      env.register_engine '.haml', WebComponentsRails::HamlTemplate
       env.register_bundle_processor 'text/html', ::Sprockets::Bundle
     end
   end
