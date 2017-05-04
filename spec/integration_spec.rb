@@ -54,6 +54,29 @@ describe 'Integration with Rails' do
       expect(File.read(output_path).gsub(/\n{2,}/, "\n")).to \
         eq("<p>Component 1</p>\n<p>Component 3</p>\n<p>Component 2</p>\n")
     end
+
+    context 'with multiple scripts' do
+      it 'keeps the scripts as-is' do
+        compile_asset('bundle_js')
+        expect(File.read(output_path).gsub(/\n{2,}/, "\n")).to \
+          eq("<component>\n<script>\nvar x = 1;\n</script>\n</component>\n<script>\nvar y = 2;\n</script>\n")
+      end
+
+      context 'with WebComponentsRails.optimize_scripts = true' do
+        before do
+          WebComponentsRails.optimize_scripts = true
+        end
+        after do
+          WebComponentsRails.optimize_scripts = nil
+        end
+
+        it 'bundles, minifies, and inlines the scripts' do
+          compile_asset('bundle_js')
+          expect(File.read(output_path).gsub(/\n{2,}/, "\n")).to \
+            eq("<component>\n</component>\n<script src=\"data:text/javascript;base64,dmFyIHg9MSx5PTI7\"></script>")
+        end
+      end
+    end
   end
 
   context 'given HTML with referenced JavaScript' do

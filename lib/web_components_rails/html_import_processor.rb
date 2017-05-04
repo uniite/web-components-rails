@@ -20,6 +20,29 @@ class WebComponentsRails::HTMLImportProcessor
     instance.cache_key
   end
 
+  def self.doc_to_html(doc)
+    # Nokogiri/Nokogumbo are hard-coded to URI-escape certain attributes (src, href, action, and a[name]),
+    # so we have to put in placeholders, and fix the values in the HTML string output afterwards
+    # This doesn't work so well with framework-specific syntax (eg. <foo src="{{bar}}">)
+    placeholder_mapping = {}
+    %w(src href action).each do |name|
+      doc.css("[#{name}]").each do |node|
+        # The placeholders are just random strings
+        placeholder = SecureRandom.hex(40)
+        attr = node.attributes[name]
+        placeholder_mapping[placeholder] = attr.value
+        attr.value = placeholder
+      end
+    end
+    new_html = doc.to_html
+    placeholder_mapping.each do |placeholder, value|
+      new_html.sub!(placeholder, value)
+    end
+
+    new_html
+  end
+
+
   attr_reader :cache_key
 
   def initialize(options = {})
@@ -112,23 +135,7 @@ class WebComponentsRails::HTMLImportProcessor
         end
       end
 
-      # Nokogiri/Nokogumbo are hard-coded to URI-escape certain attributes (src, href, action, and a[name]),
-      # so we have to put in placeholders, and fix the values in the HTML string output afterwards
-      # This doesn't work so well with framework-specific syntax (eg. <foo src="{{bar}}">)
-      placeholder_mapping = {}
-      %w(src href action).each do |name|
-        doc.css("[#{name}]").each do |node|
-          # The placeholders are just random strings
-          placeholder = SecureRandom.hex(40)
-          attr = node.attributes[name]
-          placeholder_mapping[placeholder] = attr.value
-          attr.value = placeholder
-        end
-      end
-      new_html = doc.to_html
-      placeholder_mapping.each do |placeholder, value|
-        new_html.sub!(placeholder, value)
-      end
+      new_html = self.class.doc_to_html(doc)
 
       [new_html, dependencies]
     end
