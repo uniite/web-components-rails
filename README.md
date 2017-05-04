@@ -18,6 +18,15 @@ gem 'web_components_rails'
 <%= html_import_tag 'my_component' %>
 ```
 
+### Optimized JavaScript
+
+If you'd like the scripts in your HTML bundles to be combined, minified using Uglifier, and data-src encoded for performance:
+
+```ruby
+# In an initializer or somewhere on rails load
+WebComponentsRails.optimize_scripts = true
+```
+
 ## Building
 
 After adding new features or fixes, please update the version in version.rb, and then tag the repo appropriately:
