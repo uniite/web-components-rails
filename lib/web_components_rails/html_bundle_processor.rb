@@ -39,10 +39,27 @@ class WebComponentsRails::HTMLBundleProcessor
   protected
 
     def process_bundle(html)
-      # Don't do anything if we have optimization off
-      return html unless !!WebComponentsRails.optimize_scripts
-
       doc = Nokogiri::HTML5.fragment(html)
+      doc = process_css(doc)
+      doc = process_scripts(doc)
+      doc = process_comments(doc)
+      html = WebComponentsRails::HTMLImportProcessor.doc_to_html(doc)
+      if !!WebComponentsRails.optimize_scripts
+        html.gsub(/\n+/, "\n").gsub(/\n\s+/, "\n")
+      else
+        html
+      end
+    end
+
+    def process_comments doc
+      return doc unless !!WebComponentsRails.remove_html_comments
+      doc.xpath('//comment()').remove
+      doc
+    end
+
+    def process_scripts doc
+      # Don't do anything if we have optimization off
+      return doc unless !!WebComponentsRails.optimize_scripts
 
       combined_js = ''
 
@@ -61,7 +78,20 @@ class WebComponentsRails::HTMLBundleProcessor
         doc << combined_script_tag
       end
 
-      WebComponentsRails::HTMLImportProcessor.doc_to_html(doc)
+      doc
+    end
+
+    def process_css doc
+
+      return doc unless !!WebComponentsRails.optimize_css
+
+      doc.css('style').map do |style|
+        # Assume uglifier is fine with defaults for minification
+        minified_css = css_compressor.compress(style.content)
+        style.inner_html = minified_css
+      end
+
+      doc
     end
 
     def optimized_script_tag(doc, raw_js)
@@ -76,6 +106,10 @@ class WebComponentsRails::HTMLBundleProcessor
         combined_script_tag['src'] = inlined_js
 
         combined_script_tag
+    end
+
+    def css_compressor
+      @yui_compressor ||= YUI::CssCompressor.new
     end
 
 end

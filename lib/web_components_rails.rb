@@ -4,7 +4,7 @@ require 'sprockets'
 
 module WebComponentsRails
 
-  mattr_accessor :optimize_scripts
+  mattr_accessor :optimize_scripts, :optimize_css, :remove_html_comments
   
 end
 
