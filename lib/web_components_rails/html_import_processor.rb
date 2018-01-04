@@ -7,6 +7,12 @@ require 'securerandom'
 class WebComponentsRails::HTMLImportProcessor
 
   VERSION = '10'
+  XML_SAVE_OPTIONS = {
+    save_with: ::Nokogiri::XML::Node::SaveOptions::DEFAULT_XML | ::Nokogiri::XML::Node::SaveOptions::NO_EMPTY_TAGS
+  }
+
+  # URI attributes are determined by using the attributes list at https://html.spec.whatwg.org/#attributes-3
+  # and looking for attributes that specify "Valid URL" as their values
   URI_ATTRIBUTES = %w(
     action
     cite
@@ -19,6 +25,9 @@ class WebComponentsRails::HTMLImportProcessor
     poster
     src
   ).freeze
+
+  # URI attributes are determined by using the attributes list at https://html.spec.whatwg.org/#attributes-3
+  # and looking for attributes that specify "Boolean attribute" as their values
   BOOLEAN_ATTRIBUTES = %w(
     allowfullscreen
     allowpaymentrequest
@@ -47,9 +56,6 @@ class WebComponentsRails::HTMLImportProcessor
     reversed
     selected
   ).freeze
-  XML_SAVE_OPTIONS = {
-    save_with: ::Nokogiri::XML::Node::SaveOptions::DEFAULT_XML | ::Nokogiri::XML::Node::SaveOptions::NO_EMPTY_TAGS
-  }
 
   def self.instance
     @instance ||= new
@@ -64,21 +70,26 @@ class WebComponentsRails::HTMLImportProcessor
   end
 
   def self.doc_to_html(doc)
-    # Nokogiri/Nokogumbo are hard-coded to URI-escape certain attributes (src, href, action, and a[name]),
-    # so we have to put in placeholders, and fix the values in the HTML string output afterwards
-    # This doesn't work so well with framework-specific syntax (eg. <foo src="{{bar}}">)
     doc_html = doc.to_html(encoding: 'UTF-8')
 
-    uri_regex = '(' + URI_ATTRIBUTES.join('|') + ')'
-    square_brackets_regex = Regexp.new("#{uri_regex}=\"%5B%5B(.+?)%5D%5D\"", 'i')
-    curly_braces_regex = Regexp.new("#{uri_regex}=\"%7B%7B(.+?)%7D%7D\"", 'i')
+    uri_regex = Regexp.union(URI_ATTRIBUTES)
+    square_brackets_regex = Regexp.new("(#{uri_regex})=\"%5B%5B(.+?)%5D%5D\"", 'i')
+    curly_braces_regex = Regexp.new("(#{uri_regex})=\"%7B%7B(.+?)%7D%7D\"", 'i')
 
     selectors = (URI_ATTRIBUTES + BOOLEAN_ATTRIBUTES).map { |attribute| "*[#{attribute}]"}
     doc.css(selectors.join(',')).each do |node|
+      # Nokogiri only writes out valid HTML so this outputs some nodes that would not be valid HTML
+      # (e.g. nodes with boolean attributes that have values, or nodes that have unescaped URI attributes)
+      # as both HTML and XML, and uses swap out the HTML for XML in the complete document HTML.
       pattern = node.to_html
       replacement = node.to_xml(XML_SAVE_OPTIONS)
+
+      # Nokogiri/Nokogumbo are hard-coded to URI-escape certain attributes (src, href, action, and a[name]),
+      # so we have to put in placeholders, and fix the values in the HTML string output afterwards
+      # This doesn't work so well with framework-specific syntax (eg. <foo src="{{bar}}">)
       replacement.gsub!(square_brackets_regex, '\1="[[\2]]"')
       replacement.gsub!(curly_braces_regex, '\1="{{\2}}"')
+
       doc_html.gsub!(pattern, replacement)
     end
 

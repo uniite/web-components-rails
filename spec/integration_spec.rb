@@ -45,8 +45,8 @@ describe 'Integration with Rails' do
   it 'can process complex HTML assets' do
     compile_asset('complex1')
     expect(File.read(output_path)).to eq(
-      "<a href=\"{{url}}\">Click</a>\n" +
-      "<select name=\"text\"><option value=\"value1\" selected=\"[[selected]]\">Value 1</option></select>\n"
+      '<a href="{{url}}">Click</a>' + "\n" +
+      '<select name="text"><option value="value1" selected="[[selected]]">Value 1</option></select>' + "\n"
     )
   end
 
