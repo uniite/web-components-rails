@@ -6,7 +6,50 @@ require 'securerandom'
 #   https://github.com/rails/sprockets/blob/3.x/lib/sprockets/directive_processor.rb
 class WebComponentsRails::HTMLImportProcessor
 
-  VERSION = '9'
+  VERSION = '10'
+  URI_ATTRIBUTES = %w(
+    action
+    cite
+    data
+    formaction
+    href
+    itemid
+    manifest
+    ping
+    poster
+    src
+  ).freeze
+  BOOLEAN_ATTRIBUTES = %w(
+    allowfullscreen
+    allowpaymentrequest
+    allowusermedia
+    async
+    autofocus
+    autoplay
+    checked
+    controls
+    default
+    defer
+    disabled
+    formnovalidate
+    hidden
+    ismap
+    itemscope
+    loop
+    multiple
+    muted
+    nomodule
+    novalidate
+    open
+    playsinline
+    readonly
+    required
+    reversed
+    selected
+  ).freeze
+  XML_SAVE_OPTIONS = {
+    save_with: ::Nokogiri::XML::Node::SaveOptions::DEFAULT_XML | ::Nokogiri::XML::Node::SaveOptions::NO_EMPTY_TAGS
+  }
 
   def self.instance
     @instance ||= new
@@ -24,22 +67,22 @@ class WebComponentsRails::HTMLImportProcessor
     # Nokogiri/Nokogumbo are hard-coded to URI-escape certain attributes (src, href, action, and a[name]),
     # so we have to put in placeholders, and fix the values in the HTML string output afterwards
     # This doesn't work so well with framework-specific syntax (eg. <foo src="{{bar}}">)
-    placeholder_mapping = {}
-    %w(src href action).each do |name|
-      doc.css("[#{name}]").each do |node|
-        # The placeholders are just random strings
-        placeholder = SecureRandom.hex(40)
-        attr = node.attributes[name]
-        placeholder_mapping[placeholder] = attr.value
-        attr.value = placeholder
-      end
-    end
-    new_html = doc.to_html
-    placeholder_mapping.each do |placeholder, value|
-      new_html.sub!(placeholder, value)
+    doc_html = doc.to_html(encoding: 'UTF-8')
+
+    uri_regex = '(' + URI_ATTRIBUTES.join('|') + ')'
+    square_brackets_regex = Regexp.new("#{uri_regex}=\"%5B%5B(.+?)%5D%5D\"", 'i')
+    curly_braces_regex = Regexp.new("#{uri_regex}=\"%7B%7B(.+?)%7D%7D\"", 'i')
+
+    selectors = (URI_ATTRIBUTES + BOOLEAN_ATTRIBUTES).map { |attribute| "*[#{attribute}]"}
+    doc.css(selectors.join(',')).each do |node|
+      pattern = node.to_html
+      replacement = node.to_xml(XML_SAVE_OPTIONS)
+      replacement.gsub!(square_brackets_regex, '\1="[[\2]]"')
+      replacement.gsub!(curly_braces_regex, '\1="{{\2}}"')
+      doc_html.gsub!(pattern, replacement)
     end
 
-    new_html
+    doc_html
   end
 
 

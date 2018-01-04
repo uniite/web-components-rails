@@ -42,6 +42,14 @@ describe 'Integration with Rails' do
     expect(File.read(output_path)).to eq("<p>Component 1</p>\n")
   end
 
+  it 'can process complex HTML assets' do
+    compile_asset('complex1')
+    expect(File.read(output_path)).to eq(
+      "<a href=\"{{url}}\">Click</a>\n" +
+      "<select name=\"text\"><option value=\"value1\" selected=\"[[selected]]\">Value 1</option></select>\n"
+    )
+  end
+
   context 'given HTML with imports' do
     # Dependencies look like:
     #   bundle -> [simple1, simple2]
