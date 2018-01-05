@@ -45,9 +45,14 @@ describe 'Integration with Rails' do
   it 'can process complex HTML assets' do
     compile_asset('complex1')
     expect(File.read(output_path)).to eq(
-      '<a href="{{url}}">Click</a>' + "\n" +
-      '<select name="text"><option value="value1" selected="[[selected]]">Value 1</option></select>' + "\n"
+      %{<a href="{{url}}">Click</a>\n} +
+      %{<select name="text"><option value="value1" selected="[[selected]]">Value 1</option></select>\n}
     )
+  end
+
+  it 'handles $= boolean attributes' do
+    compile_asset('complex2')
+    expect(File.read(output_path)).to eq(%{<paper-checkbox checked$="[[checked]]">Check Me</paper-checkbox>\n})
   end
 
   context 'given HTML with imports' do
@@ -60,14 +65,14 @@ describe 'Integration with Rails' do
     it 'concatenates the files in dependency order' do
       compile_asset('bundle')
       expect(File.read(output_path).gsub(/\n{2,}/, "\n")).to \
-        eq("<p>Component 1</p>\n<p>Component 3</p>\n<p>Component 2</p>\n")
+        eq(%{<p>Component 1</p>\n<p>Component 3</p>\n<p>Component 2</p>\n})
     end
 
     context 'with multiple scripts' do
       it 'keeps the scripts as-is' do
         compile_asset('bundle_js')
         expect(File.read(output_path).gsub(/\n{2,}/, "\n")).to \
-          eq("<component>\n<script>\nvar x = 1;\n</script>\n</component>\n<script>\nvar y = 2;\n</script>\n")
+          eq(%{<component>\n<script>\nvar x = 1;\n</script>\n</component>\n<script>\nvar y = 2;\n</script>\n})
       end
 
       context 'with WebComponentsRails.optimize_scripts = true' do
@@ -81,7 +86,7 @@ describe 'Integration with Rails' do
         it 'bundles, minifies, and inlines the scripts' do
           compile_asset('bundle_js')
           expect(File.read(output_path).gsub(/\n{2,}/, "\n")).to \
-            eq("<component>\n</component>\n<script src=\"data:text/javascript;base64,dmFyIHg9MSx5PTI7\"></script>")
+            eq(%{<component>\n</component>\n<script src=\"data:text/javascript;base64,dmFyIHg9MSx5PTI7\"></script>})
         end
       end
     end
@@ -101,11 +106,11 @@ describe 'Integration with Rails' do
 
     it 'inlines the JavaScript where the script tag was' do
       expect(File.read(output_path)).to eq(
-        "<p>Component 1</p>\n\n" +
-        "<script original-src=\"test.js\">\n" +
-        "#{original_js}\n" +
-        "</script>\n" +
-        "<div>My Component</div>\n"
+        %{<p>Component 1</p>\n\n} +
+        %{<script original-src=\"test.js\">\n} +
+        %{#{original_js}\n} +
+        %{</script>\n} +
+        %{<div>My Component</div>\n}
       )
     end
 
@@ -137,11 +142,11 @@ describe 'Integration with Rails' do
 
     it 'inlines the CSS where the link tag was' do
       expect(File.read(output_path)).to eq(
-        "<dom-module id=\"my-component\">\n" +
-        "    <template>\n" +
-        "        <style original-href=\"test.css\">\n#{original_css}\n</style>\n" +
-        "    </template>\n" +
-        "</dom-module>\n"
+        %{<dom-module id=\"my-component\">\n} +
+        %{    <template>\n} +
+        %{        <style original-href=\"test.css\">\n#{original_css}\n</style>\n} +
+        %{    </template>\n} +
+        %{</dom-module>\n}
       )
     end
 
