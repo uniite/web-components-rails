@@ -1,5 +1,5 @@
 require 'active_support'
-require 'nokogumbo'
+require 'nokogiri'
 require 'sprockets'
 
 module WebComponentsRails
