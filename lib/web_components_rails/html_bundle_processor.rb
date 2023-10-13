@@ -1,5 +1,5 @@
 require 'securerandom'
-require 'uglifier'
+require 'terser'
 
 # Compresses HTML bundles
 class WebComponentsRails::HTMLBundleProcessor
@@ -67,8 +67,8 @@ class WebComponentsRails::HTMLBundleProcessor
     def optimized_script_tag(doc, raw_js)
         combined_script_tag = Nokogiri::XML::Element.new('script', doc)
 
-        # Assume uglifier is fine with defaults for minification
-        minified_js = Uglifier.compile(raw_js)
+        # Assume terser is fine with defaults for minification
+        minified_js = Terser.compile(raw_js)
 
         # Data-URI encode the JS (helps a lot in browsers like IE)
         inlined_js = 'data:text/javascript;base64,'

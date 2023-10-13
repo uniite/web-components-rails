@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'nokogiri', '>= 1.12', '< 2.0'
   spec.add_dependency 'rails', '>= 6.0'
   spec.add_dependency 'sprockets-rails', '>= 3.2'
-  spec.add_dependency 'uglifier', '>= 3.2'
+  spec.add_dependency 'terser', '~> 1.1', '>= 1.1.1'
 
   spec.add_development_dependency 'rspec', '>= 3.0', '< 4.0'
 end
